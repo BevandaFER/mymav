@@ -6,4 +6,4 @@ sudo killall rviz
 sudo killall roscore
 sudo killall rosmaster
 
-roslaunch mymav_gazebo mav.launch
+roslaunch mymav_gazebo mymav_hover.launch

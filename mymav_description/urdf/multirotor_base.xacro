@@ -74,6 +74,33 @@
       </collision>
     </link>
 
+		<!--joint attached right to the base>
+		<joint name="${robot_namespace}/ft_base_joint" type="fixed">
+			<origin xyz="0 0 -0.02" rpy="0 0 0" />
+      <parent link="${robot_namespace}/base_link" />
+      <child link="${robot_namespace}/ft_base_link" />
+		</joint-->
+
+		<!--extension to the ft sensor link>
+		<link name="${robot_namespace}/ft_base_link">
+			<visual>
+        <geometry>
+           <box size="0.01 0.01 0.1"/>
+        </geometry>
+      </visual>
+
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+           <box size="0.01 0.01 0.05"/>
+        </geometry>
+      </collision>
+		</link-->
+
+
+
+
+
     <!-- attach multirotor_base_plugin to the base_link -->
     <gazebo>
       <plugin filename="librotors_gazebo_multirotor_base_plugin.so" name="multirotor_base_plugin">
@@ -88,64 +115,66 @@
 		<!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
 
     <!-- ATTACH MULTIROTOR_FT_PLUGIN TO THE BASE+_LINK -->
-  <xacro:macro name="ft_joints_link" params="robot_namespace">
+  <xacro:macro name="ft_senzor" params="robot_namespace x y z masa">
 
-		<!--joint attached right to the base-->
-		<joint name="${robot_namespace}/ft_joint_start" type="fixed">
+		<joint name="${robot_namespace}/ft_joint" type="revolute">
 			<origin xyz="0 0 0" rpy="0 0 0" />
       <parent link="${robot_namespace}/base_link" />
-      <child link="${robot_namespace}/ft_link" />
+      <child link="${robot_namespace}/ft_contact_link" />
+			<limit effort="30" velocity="1.0" lower="0" upper="0" />
 		</joint>
 
-		<!--extension to the ft sensor link-->
-		<link name="${robot_namespace}/ft_link">
+		<link name="${robot_namespace}/ft_contact_link">
 			<visual>
-        <geometry>
+			<origin xyz="0 0 -0.05" rpy="0 0 0" />
+        <geometry>`
            <box size="0.01 0.01 0.1"/>
         </geometry>
       </visual>
 
       <collision>
-        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <origin xyz="0 0 -0.05" rpy="0 0 0" />
         <geometry>
            <box size="0.01 0.01 0.1"/>
         </geometry>
       </collision>
+			<inertial>
+			<origin xyz="0 0 -0.05" rpy="0 0 0" />
+        <mass value="0.00001" />
+        <xacro:box_inertia x="${x}" y="${y}" z="${z}" mass="${mass}" />
+      </inertial>
 		</link>
 
-		<gazebo reference="${robot_namespace}/ft_link">
+		<!--gazebo reference="${robot_namespace}/ft_link">
       <material>Gazebo/White</material>
-    </gazebo>
+    </gazebo-->
 
-
-
-
-    <gazebo reference="${robot_namespace}/ft_joint_start">
+    <!--gazebo reference="${robot_namespace}/ft_joint_start">
     	<provideFeedback>true</provideFeedback>
-		</gazebo>
+		</gazebo-->
 
 <!-- The ft_sensor plugin -->  
-		<gazebo>
+		<!--gazebo>
     	<plugin name="ft_sensor" filename="libgazebo_ros_ft_sensor.so">
         <updateRate>100.0</updateRate>
         <topicName>ft_sensor_topic</topicName>
-        <jointName>firefly/ft_joint_start</jointName>
+        <jointName>${robot_namespace}/ft_joint_start</jointName>
     	</plugin>
-		</gazebo>
+		</gazebo>-->
     <!-- The ft_sensor plugin  -->
-    <!--gazebo>
+    <gazebo>
         <plugin name="ft_sensor" filename="libgazebo_ros_ft_sensor.so">
           <updateRate>100.0</updateRate>
           <robotNamespace>${robot_namespace}</robotNamespace>
           <topicName>ft_sensor_topic</topicName> 
-          <jointName>${robot_namespace}/ft_joint_finish</jointName>
+          <jointName>${robot_namespace}/ft_joint</jointName>
           <noise>
             <type>gaussian</type>
             <mean>0.0</mean>
             <stddev>0.0001</stddev>
         </noise>
         </plugin>
-    </gazebo-->
+    </gazebo>
   </xacro:macro>
 
 <!--_______________________________________________________________-->

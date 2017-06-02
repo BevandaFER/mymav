@@ -72,9 +72,14 @@
 <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
 
   <!--Instantiate joints and link for FT sensor -->
-  <xacro:ft_joints_link
-    robot_namespace="${namespace}">
-  </xacro:ft_joints_link>
+  <xacro:ft_senzor
+    robot_namespace="${namespace}" 
+    masa="0.00001"
+		x="0.025"
+		y="0.025"
+		z="0.00005"
+>
+  </xacro:ft_senzor>
 
 <!--_______________________________________-->
 
