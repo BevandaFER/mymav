@@ -871,6 +871,6 @@
       reference_altitude="500.0">
     </xacro:mavlink_interface_macro>
   </xacro:macro>
-		<!-- F/T Sensor -->
+
 
 </robot>

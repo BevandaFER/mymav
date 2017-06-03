@@ -1,0 +1,139 @@
+<?xml version="1.0"?>
+<!--
+  Copyright 2015 Fadri Furrer, ASL, ETH Zurich, Switzerland
+  Copyright 2015 Michael Burri, ASL, ETH Zurich, Switzerland
+  Copyright 2015 Mina Kamel, ASL, ETH Zurich, Switzerland
+  Copyright 2015 Janosch Nikolic, ASL, ETH Zurich, Switzerland
+  Copyright 2015 Markus Achtelik, ASL, ETH Zurich, Switzerland
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+
+<robot name="firefly" xmlns:xacro="http://ros.org/wiki/xacro">
+  <xacro:include filename="$(find mymav_description)/urdf/component_snippets.xacro" />
+  <!-- Instantiate firefly "mechanics" -->
+  <xacro:include filename="$(find mymav_description)/urdf/firefly.urdf.xacro" />
+
+  <!-- Instantiate a controller. -->
+  <xacro:controller_plugin_macro namespace="${namespace}" imu_sub_topic="imu" />
+
+  <xacro:if value="$(arg enable_mavlink_interface)">
+    <!-- Instantiate mavlink telemetry interface. -->
+    <xacro:default_mavlink_interface namespace="${namespace}" imu_sub_topic="imu" rotor_count="6" />
+  </xacro:if>
+
+  <!-- Mount an ADIS16448 IMU. -->
+  <xacro:default_imu namespace="${namespace}" parent_link="${namespace}/base_link" />
+
+  <xacro:if value="$(arg enable_ground_truth)">
+    <xacro:ground_truth_imu_and_odometry namespace="${namespace}" parent_link="${namespace}/base_link" />
+  </xacro:if>
+
+  <xacro:if value="$(arg enable_logging)">
+    <!-- Instantiate a logger -->
+    <xacro:bag_plugin_macro
+      namespace="${namespace}"
+      bag_file="$(arg log_file)"
+      rotor_velocity_slowdown_sim="${rotor_velocity_slowdown_sim}" 
+      wait_to_record_bag="$(arg wait_to_record_bag)" />
+  </xacro:if>
+
+
+    <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
+
+    <!-- ATTACH MULTIROTOR_FT_PLUGIN TO THE BASE+_LINK -->
+  <xacro:macro name="ft_sensor" params="robot_namespace x y z masa">
+
+    <joint name="${namespace}/ft_joint" type="revolute">
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <parent link="${namespace}/base_link" />
+      <child link="${namespace}/ft_contact_link" />
+      <limit effort="0" velocity="0" lower="0" upper="0" />
+    </joint>
+
+    <link name="${namespace}/ft_contact_link">
+      <visual>
+      <origin xyz="0 0 -0.05" rpy="0 0 0" />
+        <geometry>`
+           <box size="0.01 0.01 0.1"/>
+        </geometry>
+      </visual>
+
+      <collision>
+        <origin xyz="0 0 -0.05" rpy="0 0 0" />
+        <geometry>
+           <box size="0.01 0.01 0.1"/>
+        </geometry>
+      </collision>
+      <inertial>
+      <origin xyz="0 0 -0.05" rpy="0 0 0" />
+        <mass value="0.00001" />
+        <xacro:box_inertia x="${x}" y="${y}" z="${z}" mass="${mass}" />
+      </inertial>
+    </link>
+    <gazebo reference="${namespace}/ft_joint">
+      <provideFeedback>true</provideFeedback>
+    </gazebo>
+
+    <gazebo reference="${namespace}/ft_contact_link">
+      <provideFeedback>true</provideFeedback>
+    </gazebo>
+
+    <gazebo reference="${namespace}/base_link">
+      <provideFeedback>true</provideFeedback>
+    </gazebo>
+
+    <!-- The ft_sensor plugin  -->
+    <gazebo>
+        <plugin name="ft_sensor" filename="libgazebo_ros_ft_sensor.so">
+          <updateRate>100.0</updateRate>
+          <robotNamespace>${namespace}</robotNamespace>
+          <topicName>ft_sensor_topic</topicName> 
+          <jointName>${namespace}/ft_joint</jointName>
+          <noise>
+            <type>gaussian</type>
+            <mean>0.0</mean>
+            <stddev>0.0001</stddev>
+        </noise>
+        </plugin>
+    </gazebo>
+  </xacro:macro>
+
+<!--_______________________________________________________________-->
+
+
+  <!--gazebo reference="${namespace}/base_link_inertia">
+    <provideFeedback>true</provideFeedback>
+  </gazebo>
+    
+  <gazebo reference="${namespace}/rotor_0">
+      <provideFeedback>true</provideFeedback>
+  </gazebo>
+  <gazebo reference="${namespace}/rotor_1">
+      <provideFeedback>true</provideFeedback>
+  </gazebo>
+  <gazebo reference="${namespace}/rotor_2">
+      <provideFeedback>true</provideFeedback>
+  </gazebo>
+  <gazebo reference="${namespace}/rotor_3">
+      <provideFeedback>true</provideFeedback>
+  </gazebo>
+  <gazebo reference="${namespace}/rotor_4">
+      <provideFeedback>true</provideFeedback>
+  </gazebo>
+  <gazebo reference="${namespace}/rotor_5">
+      <provideFeedback>true</provideFeedback>
+  </gazebo-->
+
+</robot>
+
