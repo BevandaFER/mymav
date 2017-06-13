@@ -2,3 +2,4 @@ Tune the height controller a bit more
 Subscribe and read the waypoint publisher or add any external ref input
 Play with the parameters for the link and joint of the FT sensor
 Test out the ft controller and enable seamless switch
+Try to setup the launch of odometry sensor from my own package
