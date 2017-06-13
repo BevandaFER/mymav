@@ -16,15 +16,15 @@ class PID:
         self.kp = 0     # proportional gain
         self.ki = 0     # integral gain
         self.kd = 0     # derivative gain
-
+        self.Tv = 0     #filter coeff Td/v, Td=kd/kp
         # initialize control values
         self.up = 0                     # P part
         self.ui = 0                     # I part
-        self.ui_old = 0   
-        self.ud_old = 0               # I part from previous step
+        self.ud_old = 0                 # for real derivative         
+        self.ui_old = 0                 # I part from previous step
         self.ud = 0                     # D part
         self.u = 0                      # total control value
-        self.lim_high = float("inf")      # control value upper limit
+        self.lim_high = float("inf")    # control value upper limit
         self.lim_low = -float("inf")    # control value lower limit
 
         # init referent control value (set-value)
@@ -151,7 +151,7 @@ class PID:
             else:
                 self.ui = self.ui_old + self.ki * error * dt    # integral term
 
-            self.ud = self.ud_old*(Tv/(Tv+dt)) + de*(kd/(Tv+dt))                     # derivative term
+            self.ud = self.ud_old*(self.Tv/(self.Tv+dt)) + de*(self.kd/(self.Tv+dt))                     # derivative term
 
             self.u = self.up + self.ui + self.ud
 

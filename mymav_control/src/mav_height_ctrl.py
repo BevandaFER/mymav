@@ -43,8 +43,8 @@ class HeightControl(object):
         #Seamless hybrid ctrl
         #self.pid_f.get_seamless(ui_from_height_ctrl)
 
-        self.pid_h.set_lim_high(1500)
-        self.pid_h.set_lim_low(0)
+        #self.pid_h.set_lim_high(1500)
+        #self.pid_h.set_lim_low(0)
         
         # Initialize controller frequency
         self.rate = 50
@@ -54,6 +54,7 @@ class HeightControl(object):
         rospy.Subscriber('/clock', Clock, self.clock_cb)
         rospy.Subscriber('/fiefly/command/pose', PoseStamped, self.pose_cb)
         rospy.Subscriber('/firefly/odometry_sensor1/odometry', Odometry, self.h_mv_cb)
+        #rospy.Subscriber('/firefly/gazebo/command/motor_speed', Actuators, self.w_mv_cb)
         self.omega_pub = rospy.Publisher('/firefly/command/motor_speed', Actuators, queue_size=1)
 
     def run(self):
@@ -81,11 +82,11 @@ class HeightControl(object):
 
             if dt_clk < 10e-10:
                 dt_clk = 0.05
-
+            #dt_clk = 0.11
             # Calculate new omega value ?????????????????????????????/
             
-            omega = self.pid_h.compute(self.h_ref, self.h_mv, dt_clk)
-            omega=omega
+            domega = self.pid_h.compute(self.h_ref, self.h_mv, dt_clk)
+            omega= 547.59 + domega
             print 'omega', omega
             print dt_clk
             print 'h_ref: ', self.h_ref
@@ -108,6 +109,9 @@ class HeightControl(object):
         :param msg: Type PoseStamped
         '''
         self.z_mv = msg.pose.pose.position.z
+    #def w_mv_cb(self,msg)
+        #self.start_flag1 = True
+
 
 if __name__ == '__main__':  
 
