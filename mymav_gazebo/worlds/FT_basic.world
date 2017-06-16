@@ -35,10 +35,10 @@
         </constraints>
       </ode>
       <!--step size 10x smaller than the default value-->
-      <max_step_size>0.001</max_step_size>
+      <max_step_size>0.01</max_step_size>
       <real_time_factor>1</real_time_factor>
       <!--update rate 0 is for running at ASAP speed-->
-      <real_time_update_rate>0</real_time_update_rate>
+      <real_time_update_rate>100</real_time_update_rate>
       <gravity>0 0 -9.81</gravity>
     </physics>
   </world>
