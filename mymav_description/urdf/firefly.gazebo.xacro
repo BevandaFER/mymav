@@ -5,13 +5,10 @@
   Copyright 2015 Mina Kamel, ASL, ETH Zurich, Switzerland
   Copyright 2015 Janosch Nikolic, ASL, ETH Zurich, Switzerland
   Copyright 2015 Markus Achtelik, ASL, ETH Zurich, Switzerland
-
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
   You may obtain a copy of the License at
-
   http://www.apache.org/licenses/LICENSE-2.0
-
   Unless required by applicable law or agreed to in writing, software
   distributed under the License is distributed on an "AS IS" BASIS,
   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -52,53 +49,55 @@
     <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
 
     <!-- ATTACH MULTIROTOR_FT_PLUGIN TO THE BASE+_LINK -->
-  <xacro:macro name="ft_sensor" params="robot_namespace x y z masa">
+  <xacro:macro name="ft_sensor" params="robot_namespace x y z mass">
 
-    <joint name="${namespace}/ft_joint" type="prismatic">
+    <joint name="${robot_namespace}/ft_joint" type="prismatic">
       <origin xyz="0 0 0" rpy="0 0 0" />
-      <parent link="${namespace}/base_link" />
-      <child link="${namespace}/ft_contact_link" />
+      <parent link="${robot_namespace}/base_link" />
+      <child link="${robot_namespace}/ft_contact_link" />
       <limit effort="0" velocity="0" lower="0" upper="0" />
       <axis xyz="0 0 1"/>
       <!--dynamics spring_stiffness='1000000' spring_reference='0' damping='0' friction='0'/-->
     </joint>
 
-    <link name="${namespace}/ft_contact_link">
+    <link name="${robot_namespace}/ft_contact_link">
       <visual>
-      <origin xyz="0 0 -0.05" rpy="0 0 0" />
+      <origin xyz="0 0 -${z/2}" rpy="0 0 0" />
         <geometry>`
-           <box size="0.01 0.01 0.1"/>
+           <box size="${x} ${y} ${z}"/>
         </geometry>
       </visual>
 
       <collision>
-        <origin xyz="0 0 -0.05" rpy="0 0 0" />
+        <origin xyz="0 0 -${z/2}" rpy="0 0 0" />
         <geometry>
-           <box size="0.01 0.01 0.1"/>
+           <box size="${x} ${y} ${z}" />
         </geometry>
       </collision>
       <inertial>
-      <origin xyz="0 0 -0.05" rpy="0 0 0" />
-        <mass value="0.00001" />
+      <origin xyz="0 0 -${z/2}" rpy="0 0 0" />
+        <mass value="${mass}" />
         <xacro:box_inertia x="${x}" y="${y}" z="${z}" mass="${mass}" />
       </inertial>
     </link>
 
     <gazebo reference="${robot_namespace}/ft_contact_link">
       <provideFeedback>True</provideFeedback>
-      <kp>6000</kp>
-      <kd>60000</kd>
+      <kp>1.0e+9</kp>
+      <kd>5.0e+5</kd>
+
     </gazebo>
 
-    <gazebo reference="${namespace}/ft_joint">
+    <gazebo reference="${robot_namespace}/ft_joint">
       <provideFeedback>true</provideFeedback>
     </gazebo>
 
-    <gazebo reference="${namespace}/ft_contact_link">
+    <gazebo reference="${robot_namespace}/ft_contact_link">
       <provideFeedback>true</provideFeedback>
+      <material>Gazebo/Orange</material>
     </gazebo>
 
-    <gazebo reference="${namespace}/base_link">
+    <gazebo reference="${robot_namespace}/base_link">
       <provideFeedback>true</provideFeedback>
     </gazebo>
 
@@ -106,9 +105,9 @@
     <gazebo>
         <plugin name="ft_sensor" filename="libgazebo_ros_ft_sensor.so">
           <updateRate>100.0</updateRate>
-          <robotNamespace>${namespace}</robotNamespace>
+          <robotNamespace>${robot_namespace}</robotNamespace>
           <topicName>ft_sensor_topic</topicName> 
-          <jointName>${namespace}/ft_joint</jointName>
+          <jointName>${robot_namespace}/ft_joint</jointName>
           <noise>
             <type>gaussian</type>
             <mean>0.0</mean>
@@ -145,4 +144,3 @@
   </gazebo-->
 
 </robot>
-
