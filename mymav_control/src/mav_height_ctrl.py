@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-
+from matplotlib import pyplot as plt
 import rospy
 from pid import PID
 from geometry_msgs.msg import PoseStamped, WrenchStamped
