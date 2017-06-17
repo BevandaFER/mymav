@@ -5,7 +5,7 @@
   <!-- Properties -->
   <xacro:property name="namespace" value="$(arg namespace)" />
   <xacro:property name="rotor_velocity_slowdown_sim" value="10" />
-  <xacro:property name="use_mesh_file" value="true" />
+  <xacro:property name="use_mesh_file" value="false" />
   <xacro:property name="mesh_file" value="package://mymav_description/meshes/firefly.dae" />
   <xacro:property name="mass" value="1.5" /> <!-- [kg] -->
   <xacro:property name="body_width" value="0.1" /> <!-- [m] -->
@@ -56,10 +56,10 @@
   <!--Instantiate joints and link for FT sensor -->
   <xacro:ft_sensor
     robot_namespace="${namespace}" 
-    masa="0.00001"
-		x="0.025"
-		y="0.025"
-		z="0.00005"
+    mass="0.001"
+    x="0.01"
+    y="0.01"
+    z="0.1"
     >
   </xacro:ft_sensor>
 
