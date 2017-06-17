@@ -6,13 +6,10 @@ import rospy
 from pid import PID
 from geometry_msgs.msg import PoseStamped, WrenchStamped
 from sensor_msgs.msg import Imu
-
 #from std_msgs.msg import Float32, Float64
-
 from morus_msgs.msg import PIDController
 #from dynamic_reconfigure.server import Server   
-#from morus_msgs.cfg import MavZCtlParams
-
+#from morus_msgs.cfg import MavAttitudeCtlParamsConfig 
 import math
 from datetime import datetime
 from rosgraph_msgs.msg import Clock
@@ -20,10 +17,11 @@ from control_msgs.msg import JointControllerState
 from nav_msgs.msg import Odometry
 from mav_msgs.msg import Actuators
 
-class HeightControl(object):
+
+class ForceControl(object):
     
     '''
-    Constructor for height control. Initializes parameters for PID controller.
+    Constructor for force control. Initializes parameters for PID controller.
     '''
     def __init__(self):
         
@@ -31,20 +29,19 @@ class HeightControl(object):
         self.start_flag1 = False
         self.start_flag2 = False
 
-        # Initialize controllers for height
-        self.pid_h = PID()
+        # Initialize controllers for force
+        self.pid_f = PID()
 
         #Initalize controller parameters.
-        self.pid_h.set_kp(14.823)
-        self.pid_h.set_ki(0.461)
-        self.pid_h.set_kd(45.22)
-        self.pid_h.set_Tv(0.153)  #filter coeff
-
+        self.pid_f.set_kp(10)
+        self.pid_f.set_ki(0)
+        self.pid_f.set_kd(0.0) #off
+        self.pid_f.set_Tv(1) #no effect
         #Seamless hybrid ctrl
         #self.pid_f.get_seamless(ui_from_height_ctrl)
 
-        #self.pid_h.set_lim_high(838)
-        #self.pid_h.set_lim_low(0)
+        #self.pid_f.set_lim_high(0.05)
+        #self.pid_f.set_lim_low(-0.05)
         
         # Initialize controller frequency
         self.rate = 50
@@ -52,9 +49,8 @@ class HeightControl(object):
 
         # Initialize subscribers
         rospy.Subscriber('/clock', Clock, self.clock_cb)
-        rospy.Subscriber('/fiefly/command/pose', PoseStamped, self.pose_cb)
-        rospy.Subscriber('/firefly/odometry_sensor1/odometry', Odometry, self.h_mv_cb)
-        #rospy.Subscriber('/firefly/gazebo/command/motor_speed', Actuators, self.w_mv_cb)
+        rospy.Subscriber('/firefly/ft_sensor_topic', WrenchStamped, self.f_mv_cb)
+        #rospy.Subscriber('/firefly/command/pose', PoseStamped, self.pose_cb) 
         self.omega_pub = rospy.Publisher('/firefly/command/motor_speed', Actuators, queue_size=1)
 
     def run(self):
@@ -63,11 +59,11 @@ class HeightControl(object):
             print 'Waiting for the first measurement or reference'
             rospy.sleep(0.5)
 
-        print 'Starting height control'
+        print 'Starting force control'
         
         # Starting reference
-        self.h_ref = 1
-
+        self.f_ref = 1
+    
 
         clock_old = self.clock
 
@@ -82,20 +78,15 @@ class HeightControl(object):
 
             if dt_clk < 10e-10:
                 dt_clk = 0.05
-            #dt_clk = 0.11
-     
+
+            # Calculate new omega value ?????????????????????????????/
             
-            domega = self.pid_h.compute(self.h_ref, self.h_mv, dt_clk)
-            omega= 547.59 + domega
+            omega = 540.783 + self.pid_f.compute(self.f_ref, self.f_mv, dt_clk)
             print 'omega', omega
             print dt_clk
-            print 'h_ref: ', self.h_ref
-            print 'h_mv: ', self.h_mv
-            #saturation
-            if omega < 0:
-                omega = 0
-            if omega > 838 :
-                omega = 838
+            print 'f_ref: ', self.f_ref
+            print 'f_mv: ', self.f_mv
+
             #publish omega!!!
             omegaMsg=Actuators()   
             omegaMsg.angular_velocities=[omega, omega, omega, omega, omega, omega]      
@@ -104,21 +95,13 @@ class HeightControl(object):
     def clock_cb(self, msg):
         self.clock = msg
 
-    def h_mv_cb(self, msg):
+    def f_mv_cb(self, msg):
         self.start_flag1 = True
-        self.h_mv = msg.pose.pose.position.z
-    def pose_cb(self, msg):
-        '''
-        Pose (6DOF - position and orientation) callback.
-        :param msg: Type PoseStamped
-        '''
-        self.z_mv = msg.pose.pose.position.z
-    #def w_mv_cb(self,msg)
-        #self.start_flag1 = True
+        self.f_mv = msg.wrench.force.z
 
 
 if __name__ == '__main__':  
 
-    rospy.init_node('mav_height_ctrl')
-    height_ctrl = HeightControl()
-    height_ctrl.run()
+    rospy.init_node('mav_force_ctrl')
+    force_ctrl = ForceControl()
+    force_ctrl.run()
