@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-
+from matplotlib import pyplot as plt
 import rospy
 from pid import PID
 from geometry_msgs.msg import PoseStamped, WrenchStamped
@@ -33,15 +33,16 @@ class ForceControl(object):
         self.pid_f = PID()
 
         #Initalize controller parameters.
-        self.pid_f.set_kp(10)
-        self.pid_f.set_ki(0)
-        self.pid_f.set_kd(0.0) #off
-        self.pid_f.set_Tv(1) #no effect
+        #----parameters empirically obtained----
+        self.pid_f.set_kp(50)
+        self.pid_f.set_ki(150)
+        self.pid_f.set_kd(10) 
+        self.pid_f.set_Tv(1) 
         #Seamless hybrid ctrl
         #self.pid_f.get_seamless(ui_from_height_ctrl)
 
-        #self.pid_f.set_lim_high(0.05)
-        #self.pid_f.set_lim_low(-0.05)
+        self.pid_f.set_lim_high(823)
+        self.pid_f.set_lim_low(-823)
         
         # Initialize controller frequency
         self.rate = 50
@@ -62,7 +63,7 @@ class ForceControl(object):
         print 'Starting force control'
         
         # Starting reference
-        self.f_ref = 1
+        self.f_ref = 10
     
 
         clock_old = self.clock
@@ -79,9 +80,11 @@ class ForceControl(object):
             if dt_clk < 10e-10:
                 dt_clk = 0.05
 
-            # Calculate new omega value ?????????????????????????????/
+            # Calculate new omega value 
             
-            omega = 540.783 + self.pid_f.compute(self.f_ref, self.f_mv, dt_clk)
+            domega = self.pid_f.compute(self.f_ref, self.f_mv, dt_clk)
+            omega = 540.783 - domega
+            print 'domega', domega
             print 'omega', omega
             print dt_clk
             print 'f_ref: ', self.f_ref
