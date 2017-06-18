@@ -28,17 +28,17 @@
         </solver>
         <constraints>
           <!--cfm>0</cfm-->   <!--infinitely hard plane-->
-          <cfm>0.2</cfm> <!--fixing incontinuities then in contact with the plane-->
+          <cfm>0</cfm> <!--fixing incontinuities then in contact with the plane-->
           <erp>0.2</erp>
           <contact_max_correcting_vel>100</contact_max_correcting_vel>
           <contact_surface_layer>0.001</contact_surface_layer>
         </constraints>
       </ode>
       <!--step size 10x smaller than the default value-->
-      <max_step_size>0.001</max_step_size>
+      <max_step_size>0.01</max_step_size>
       <real_time_factor>1</real_time_factor>
       <!--update rate 0 is for running at ASAP speed-->
-      <real_time_update_rate>0</real_time_update_rate>
+      <real_time_update_rate>100</real_time_update_rate>
       <gravity>0 0 -9.81</gravity>
     </physics>
   </world>
