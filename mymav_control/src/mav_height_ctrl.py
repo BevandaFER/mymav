@@ -35,16 +35,17 @@ class HeightControl(object):
         self.pid_h = PID()
 
         #Initalize controller parameters.
-        self.pid_h.set_kp(14.823)
-        self.pid_h.set_ki(0.461)
-        self.pid_h.set_kd(45.22)
-        self.pid_h.set_Tv(0.153)  #filter coeff
+        #----parameters empirically obtained----
+        self.pid_h.set_kp(100)  #matlab 24.05873
+        self.pid_h.set_ki(1)   #matlab 0.696
+        self.pid_h.set_kd(100)   #matlab 116.1412
+        self.pid_h.set_Tv(0.025)  #matlab filter coeff 0.2414)
 
         #Seamless hybrid ctrl
         #self.pid_f.get_seamless(ui_from_height_ctrl)
 
-        #self.pid_h.set_lim_high(838)
-        #self.pid_h.set_lim_low(0)
+        #self.pid_h.set_lim_high(0.05)
+        #self.pid_h.set_lim_low(-0.05)
         
         # Initialize controller frequency
         self.rate = 50
@@ -52,7 +53,7 @@ class HeightControl(object):
 
         # Initialize subscribers
         rospy.Subscriber('/clock', Clock, self.clock_cb)
-        rospy.Subscriber('/fiefly/command/pose', PoseStamped, self.pose_cb)
+        rospy.Subscriber('/firefly/command/pose', PoseStamped, self.pose_cb)
         rospy.Subscriber('/firefly/odometry_sensor1/odometry', Odometry, self.h_mv_cb)
         #rospy.Subscriber('/firefly/gazebo/command/motor_speed', Actuators, self.w_mv_cb)
         self.omega_pub = rospy.Publisher('/firefly/command/motor_speed', Actuators, queue_size=1)
@@ -82,8 +83,8 @@ class HeightControl(object):
 
             if dt_clk < 10e-10:
                 dt_clk = 0.05
-            #dt_clk = 0.11
-     
+       
+            
             
             domega = self.pid_h.compute(self.h_ref, self.h_mv, dt_clk)
             omega= 547.59 + domega
@@ -112,7 +113,7 @@ class HeightControl(object):
         Pose (6DOF - position and orientation) callback.
         :param msg: Type PoseStamped
         '''
-        self.z_mv = msg.pose.pose.position.z
+        self.z_sp = msg.pose.pose.position.z
     #def w_mv_cb(self,msg)
         #self.start_flag1 = True
 
