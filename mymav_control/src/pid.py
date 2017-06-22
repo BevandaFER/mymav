@@ -189,7 +189,7 @@ class PID:
         self.pid_msg.header.stamp = rospy.Time.now()
         return self.pid_msg
 
-    def get_seamless(self, invar):
-        """ Forwards I component from height control value
-        """
-        self.ui=invar
+    def set_seamless(self, invar): 
+        """ Assigns the last ui from heightCTRL to forceCTRL and vice versa 
+        """ 
+        self.ui_old=invar
