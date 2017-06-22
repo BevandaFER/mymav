@@ -121,7 +121,7 @@ class AttitudeControl:
             # Your result should be referent velocity value for each motor.
             # Store them in variables mot_sp1, mot_sp2, mot_sp3, mot_sp4, mot_sp5, mot_sp6
 
-            #ROTOR CONFIG  <color>.<number>
+            #FIREFLY ROTOR CONFIG  <color>.<number>
             #######################
             #     R.1     R.6     #
             # B.2             B.5 #
@@ -132,12 +132,12 @@ class AttitudeControl:
             u=self.pid_roll.compute(self.euler_sp.x,self.euler_mv.x)
             mot_speedr=self.pid_roll_rate.compute(u,self.euler_rate_mv.x)
 
-            mot_sp1_r=0.5*mot_speedr
+            mot_sp1_r=mot_speedr
             mot_sp2_r=mot_speedr
-            mot_sp3_r=0.5*mot_speedr
-            mot_sp4_r=-0.5*mot_speedr
+            mot_sp3_r=mot_speedr
+            mot_sp4_r=-mot_speedr
             mot_sp5_r=-mot_speedr
-            mot_sp6_r=-0.5*mot_speedr
+            mot_sp6_r=-mot_speedr
 
             #pitch
             u=self.pid_pitch.compute(self.euler_sp.y,self.euler_mv.y)

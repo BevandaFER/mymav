@@ -7,7 +7,7 @@ from pid import PID
 from geometry_msgs.msg import PoseStamped, WrenchStamped
 from sensor_msgs.msg import Imu
 
-#from std_msgs.msg import Float32, Float64
+from std_msgs.msg import Float32
 
 from morus_msgs.msg import PIDController
 #from dynamic_reconfigure.server import Server   
@@ -46,7 +46,8 @@ class HeightControl(object):
 
         #self.pid_h.set_lim_high(0.05)
         #self.pid_h.set_lim_low(-0.05)
-        
+        self.val=self.pid_h.get_pid_values()
+        print 'val' , self.val[1]
         # Initialize controller frequency
         self.rate = 50
         self.ros_rate = rospy.Rate(self.rate)
@@ -55,8 +56,8 @@ class HeightControl(object):
         rospy.Subscriber('/clock', Clock, self.clock_cb)
         rospy.Subscriber('/firefly/command/pose', PoseStamped, self.pose_cb)
         rospy.Subscriber('/firefly/odometry_sensor1/odometry', Odometry, self.h_mv_cb)
-        #rospy.Subscriber('/firefly/gazebo/command/motor_speed', Actuators, self.w_mv_cb)
-        self.omega_pub = rospy.Publisher('/firefly/command/motor_speed', Actuators, queue_size=1)
+        #self.omega_pub = rospy.Publisher('/firefly/command/motor_speed', Actuators, queue_size=1)
+        self.mot_ref_pub = rospy.Publisher('/firefly/mot_vel_ref', Float32, queue_size=1)
 
     def run(self):
 
@@ -83,25 +84,37 @@ class HeightControl(object):
 
             if dt_clk < 10e-10:
                 dt_clk = 0.05
-       
-            
-            
-            domega = self.pid_h.compute(self.h_ref, self.h_mv, dt_clk)
-            omega= 547.59 + domega
-            print 'omega', omega
+        
+            self.domega = self.pid_h.compute(self.h_ref, self.h_mv, dt_clk)
+            self.omega= 547.59 + self.domega
+            print 'omega', self.omega
             print dt_clk
             print 'h_ref: ', self.h_ref
             print 'h_mv: ', self.h_mv
             #saturation
-            if omega < 0:
-                omega = 0
-            if omega > 838 :
-                omega = 838
+            if self.omega < 0:
+                self.omega = 0
+            if self.omega > 838 :
+                self.omega = 838
             #publish omega!!!
-            omegaMsg=Actuators()   
-            omegaMsg.angular_velocities=[omega, omega, omega, omega, omega, omega]      
-            self.omega_pub.publish(omegaMsg)
 
+            self.attitude_ctl = 1  # don't forget to set me to 1 when you implement attitude ctl
+
+            ########################################################
+            ########################################################
+
+            if self.attitude_ctl == 0:
+                # Publish motor velocities
+                omegaMsg=Actuators()   
+                omegaMsg.angular_velocities=[self.omega, self.omega, self.omega, self.omega, self.omega, self.omega]      
+                self.omega_pub.publish(omegaMsg)
+
+
+            else:
+                # publish referent motor velocity to attitude controller
+                omegaMsg = Float32(self.omega)
+                self.mot_ref_pub.publish(omegaMsg)
+        
     def clock_cb(self, msg):
         self.clock = msg
 
@@ -113,9 +126,7 @@ class HeightControl(object):
         Pose (6DOF - position and orientation) callback.
         :param msg: Type PoseStamped
         '''
-        self.z_sp = msg.pose.pose.position.z
-    #def w_mv_cb(self,msg)
-        #self.start_flag1 = True
+        self.h_ref = msg.pose.position.z
 
 
 if __name__ == '__main__':  

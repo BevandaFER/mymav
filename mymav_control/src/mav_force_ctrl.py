@@ -51,7 +51,7 @@ class ForceControl(object):
         # Initialize subscribers
         rospy.Subscriber('/clock', Clock, self.clock_cb)
         rospy.Subscriber('/firefly/ft_sensor_topic', WrenchStamped, self.f_mv_cb)
-        #rospy.Subscriber('/firefly/command/pose', PoseStamped, self.pose_cb) 
+        rospy.Subscriber('/firefly/command/ft_ref', WrenchStamped, self.f_ref_cb) 
         self.omega_pub = rospy.Publisher('/firefly/command/motor_speed', Actuators, queue_size=1)
 
     def run(self):
@@ -84,6 +84,10 @@ class ForceControl(object):
             
             domega = self.pid_f.compute(self.f_ref, self.f_mv, dt_clk)
             omega = 540.783 - domega
+            if omega < 0:
+                omega = 0
+            if omega > 838 :
+                omega = 838
             print 'domega', domega
             print 'omega', omega
             print dt_clk
@@ -102,6 +106,8 @@ class ForceControl(object):
         self.start_flag1 = True
         self.f_mv = msg.wrench.force.z
 
+    def f_ref_cb(self, msg):
+        self.f_ref = msg.wrench.force.z
 
 if __name__ == '__main__':  
 
