@@ -29,11 +29,10 @@ class HybridControl(object):
         self.clock = Clock()
         self.start_flag1 = False
         self.start_flag2 = False
-        self.start_force = False 
-
+        self.start_force = False
         #two var for initial u_i passing between controllers
-        self.passH = 0               
-        self.passF = 0   #initially on ForceCTRL because of the inicial contact with the surface
+        self.passH = False              
+        self.passF = False   #initially on ForceCTRL because of the inicial contact with the surface
 
 
         # Initialize controller for height
@@ -89,7 +88,7 @@ class HybridControl(object):
         
         # Starting reference
         self.h_ref = 1
-        self.f_ref = 5
+        self.f_ref = 10
 
         clock_old = self.clock
 
@@ -120,7 +119,7 @@ class HybridControl(object):
 
             
 
-            omega= 540.783 + domega
+            omega= 547.59 + domega
             #saturation
             if omega < 0:
                 omega = 0

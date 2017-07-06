@@ -10,6 +10,7 @@ from sensor_msgs.msg import Imu
 from morus_msgs.msg import PIDController
 #from dynamic_reconfigure.server import Server   
 #from morus_msgs.cfg import MavAttitudeCtlParamsConfig 
+from std_msgs.msg import Float32
 import math
 from datetime import datetime
 from rosgraph_msgs.msg import Clock
@@ -53,7 +54,7 @@ class ForceControl(object):
         rospy.Subscriber('/firefly/ft_sensor_topic', WrenchStamped, self.f_mv_cb)
         rospy.Subscriber('/firefly/command/ft_ref', WrenchStamped, self.f_ref_cb) 
         self.omega_pub = rospy.Publisher('/firefly/command/motor_speed', Actuators, queue_size=1)
-
+        self.mot_ref_pub = rospy.Publisher('/firefly/mot_vel_ref', Float32, queue_size=1)
     def run(self):
 
         while not self.start_flag1 and not self.start_flag2:
@@ -83,21 +84,34 @@ class ForceControl(object):
             # Calculate new omega value 
             
             domega = self.pid_f.compute(self.f_ref, self.f_mv, dt_clk)
-            omega = 540.783 - domega
-            if omega < 0:
-                omega = 0
-            if omega > 838 :
-                omega = 838
+            self.omega = 540.783 - domega
+            if self.omega < 0:
+                self.omega = 0
+            if self.omega > 838 :
+                self.omega = 838
             print 'domega', domega
-            print 'omega', omega
+            print 'omega', self.omega
             print dt_clk
             print 'f_ref: ', self.f_ref
             print 'f_mv: ', self.f_mv
 
             #publish omega!!!
-            omegaMsg=Actuators()   
-            omegaMsg.angular_velocities=[omega, omega, omega, omega, omega, omega]      
-            self.omega_pub.publish(omegaMsg)
+            self.attitude_ctl = 1  # don't forget to set me to 1 when you implement attitude ctl
+
+            ########################################################
+            ########################################################
+
+            if self.attitude_ctl == 0:
+                # Publish motor velocities
+                omegaMsg=Actuators()   
+                omegaMsg.angular_velocities=[self.omega, self.omega, self.omega, self.omega, self.omega, self.omega]      
+                self.omega_pub.publish(omegaMsg)
+
+
+            else:
+                # publish referent motor velocity to attitude controller
+                omegaMsg = Float32(self.omega)
+                self.mot_ref_pub.publish(omegaMsg)
 
     def clock_cb(self, msg):
         self.clock = msg

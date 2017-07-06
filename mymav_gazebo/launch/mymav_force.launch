@@ -29,7 +29,9 @@
       <arg name="enable_ground_truth" value="$(arg enable_ground_truth)" />
       <arg name="log_file" value="$(arg log_file)"/>
     </include>  
-
+    <node name="mav_attitude_ctrl" pkg="mymav_control" type="mav_attitude_ctrl.py" output="screen">
+      <remap from="odometry" to="odometry_sensor1/odometry" />
+    </node>
     <node name="mav_force_ctrl" pkg="mymav_control" type="mav_force_ctrl.py" output="screen">
       <remap from="odometry" to="odometry_sensor1/odometry" />
     </node>

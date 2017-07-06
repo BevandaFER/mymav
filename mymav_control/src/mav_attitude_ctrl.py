@@ -1,13 +1,10 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-__author__ = 'thaus'
-
 import rospy
 from pid import PID
 from pid2 import PID2
 from geometry_msgs.msg import Vector3, Vector3Stamped, PoseStamped, WrenchStamped
-from sensor_msgs.msg import Imu
 from std_msgs.msg import Float32
 import math
 from morus_msgs.msg import PIDController
@@ -27,14 +24,7 @@ class AttitudeControl:
         /firefly/euler_ref          - used to set the attitude referent (useful for testing controllers)
     Publishes:
         /firefly/command/motor_speed     - referent motor velocities sent to each motor controller
-        /firefly/pid_roll           - publishes PID-roll data - referent value, measured value, P, I, D and total component (useful for tuning params)
-        /firefly/pid_roll_rate      - publishes PID-roll_rate data - referent value, measured value, P, I, D and total component (useful for tuning params)
-        /firefly/pid_pitch          - publishes PID-pitch data - referent value, measured value, P, I, D and total component (useful for tuning params)
-        /firefly/pid_pitch_rate     - publishes PID-pitch_rate data - referent value, measured value, P, I, D and total component (useful for tuning params)
-        /firefly/pid_yaw            - publishes PID-yaw data - referent value, measured value, P, I, D and total component (useful for tuning params)
-        /firefly/pid_yaw_rate       - publishes PID-yaw_rate data - referent value, measured value, P, I, D and total component (useful for tuning params)
-
-    Dynamic reconfigure is used to set controllers param online.
+    
     '''
 
     def __init__(self):
@@ -44,12 +34,13 @@ class AttitudeControl:
 
         self.start_flag = False             # flag indicates if the first measurement is received
         self.config_start = False           # flag indicates if the config callback is called for the first time
-        self.euler_mv = Vector3()           # measured euler angles
-        self.euler_sp = Vector3(0, 0, 0)    # euler angles referent values
 
-        self.w_sp = 0                       # referent value for motor velocity - it should be the output of height controller
-
-        self.euler_rate_mv = Vector3()      # measured angular velocities
+        self.w_sp = 0
+        self.euler_sp = Vector3(0, 0, 0)
+        # init euler angles referent values            
+        self.euler_mv=Vector3()
+        # init measured angular velocities
+        self.euler_rate_mv=Vector3()
 
         self.pid_roll = PID2()                           # roll controller
         self.pid_roll_rate  = PID2()                     # roll rate (wx) controller
@@ -57,36 +48,25 @@ class AttitudeControl:
         self.pid_pitch = PID2()                          # pitch controller
         self.pid_pitch_rate = PID2()                     # pitch rate (wy) controller
 
-        self.pid_yaw = PID2()                            # yaw controller
-        self.pid_yaw_rate = PID2()                       # yaw rate (wz) controller
-
         ##################################################################
         ##################################################################
         # Add your PID params here
 
-        self.pid_roll.set_kp(20.769)
-        self.pid_roll.set_ki(0.45)
-        self.pid_roll.set_kd(0.707)
+        self.pid_roll.set_kp(14.5)
+        self.pid_roll.set_ki(2.4)
+        self.pid_roll.set_kd(2.4)
 
-        self.pid_roll_rate.set_kp(24)
-        self.pid_roll_rate.set_ki(2)
+        self.pid_roll_rate.set_kp(17.5)
+        self.pid_roll_rate.set_ki(7.1)
         self.pid_roll_rate.set_kd(1)
 
-        self.pid_pitch.set_kp(20.769)
-        self.pid_pitch.set_ki(0.45)
-        self.pid_pitch.set_kd(0.707)
+        self.pid_pitch.set_kp(14.5)
+        self.pid_pitch.set_ki(2.4)
+        self.pid_pitch.set_kd(2.4)
 
-        self.pid_pitch_rate.set_kp(24)
-        self.pid_pitch_rate.set_ki(2)
+        self.pid_pitch_rate.set_kp(17.5)
+        self.pid_pitch_rate.set_ki(7.1)
         self.pid_pitch_rate.set_kd(1)
-
-        self.pid_yaw.set_kp(5.5)
-        self.pid_yaw.set_ki(0)
-        self.pid_yaw.set_kd(1)
-
-        self.pid_yaw_rate.set_kp(10)
-        self.pid_yaw_rate.set_ki(0)
-        self.pid_yaw_rate.set_kd(0.1)
 
         ##################################################################
         ##################################################################
@@ -97,7 +77,8 @@ class AttitudeControl:
         rospy.Subscriber('/firefly/mot_vel_ref', Float32, self.mot_vel_ref_cb)
         rospy.Subscriber('/firefly/euler_ref', Vector3, self.euler_ref_cb)
         self.pub_mot = rospy.Publisher('/firefly/command/motor_speed', Actuators, queue_size=1)
-        
+        self.pub_euler = rospy.Publisher('/firefly/euler_mv', Vector3, queue_size=1)
+        self.pub_euler_rate = rospy.Publisher('/firefly/euler_rate_mv', Vector3, queue_size=1)
     def run(self):
         '''
         Runs ROS node - computes PID algorithms for cascade attitude control.
@@ -150,8 +131,7 @@ class AttitudeControl:
             mot_sp6_p=-mot_speedp
 
             #bez yaw 
-            u=self.pid_yaw.compute(self.euler_sp.z,self.euler_mv.z)
-            mot_speedy=self.pid_yaw_rate.compute(u,self.euler_rate_mv.z)
+
             mot_sp1_y=0
             mot_sp2_y=0
             mot_sp3_y=0
@@ -175,7 +155,12 @@ class AttitudeControl:
             mot_speed_msg = Actuators()
             mot_speed_msg.angular_velocities = [mot_sp1,mot_sp2,mot_sp3,mot_sp4,mot_sp5,mot_sp6]
             self.pub_mot.publish(mot_speed_msg)
-
+            # measured euler angle
+            
+            self.pub_euler.publish(self.euler_mv)
+            # measured angular velocities
+        
+            self.pub_euler_rate.publish(self.euler_rate_mv)
 
     def mot_vel_ref_cb(self, msg):
         '''
@@ -188,7 +173,7 @@ class AttitudeControl:
         '''
         AHRS callback. Used to extract roll, pitch, yaw and their rates.
         We used the following order of rotation - 1)yaw, 2) pitch, 3) roll
-        :param msg: Type sensor_msgs/Imu
+        :param msg: nav_msgs.msg/Odometry
         '''
         if not self.start_flag:
             self.start_flag = True
@@ -217,6 +202,8 @@ class AttitudeControl:
         self.euler_rate_mv.x = p + sx * ty * q + cx * ty * r
         self.euler_rate_mv.y = cx * q - sx * r
         self.euler_rate_mv.z = sx / cy * q + cx / cy * r
+
+
 
     def euler_ref_cb(self, msg):
         ''' 
